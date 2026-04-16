@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import { ImDownload2 } from "react-icons/im";
 import html2canvas from "html2canvas";
@@ -11,6 +11,8 @@ import { FaEye, FaPencilAlt } from "react-icons/fa";
 import Button from "@mui/material/Button";
 import { MdDelete } from "react-icons/md";
 import QRCode from "qrcode";
+import { SearchContext } from "../../context/SearchContext";
+import { Pagination } from "@mui/material";
 
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => {
@@ -42,6 +44,12 @@ const Receipts = () => {
   const [paymentFilter, setPaymentFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [selectedReceipt, setSelectedReceipt] = useState(null); // ✅ FIX
+const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
+
+  const { searchQuery } = useContext(SearchContext);
+  
 
   // ✅ FILTER LOGIC
   const filteredReceipts = receipts.filter((item) => {
@@ -60,6 +68,16 @@ const Receipts = () => {
 
     return matchesSearch && matchesPayment && matchesDate;
   });
+
+  const filteredData = filteredReceipts?.filter((item) =>
+         item.receiptNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+
+  );
+  
+  const dataToShow = searchQuery ? filteredData : filteredReceipts;
+
+
 
   // ✅ PDF GENERATE
 
@@ -185,15 +203,22 @@ pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
 };
 
   // ✅ FETCH
-  const fetchReceipts = async () => {
-    try {
-      const res = await fetch("http://localhost:4000/api/receipts");
-      const data = await res.json();
-      setReceipts(data.receipts || []);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+ const fetchReceipts = async (pageNo = 1) => {
+  try {
+    const res = await fetch(
+      `http://localhost:4000/api/receipts?page=${pageNo}&limit=10`
+    );
+
+    const data = await res.json();
+
+    setReceipts(data.receipts || []);
+    setPage(data.page || 1);
+    setTotalPages(data.totalPages || 1);
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   // ✅ DELETE
   const deleteReceipt = async (id) => {
@@ -210,9 +235,13 @@ pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
     }
   };
 
-  useEffect(() => {
-    fetchReceipts();
-  }, []);
+useEffect(() => {
+  fetchReceipts(1);
+}, []);
+  
+  const handleChange = (event, value) => {
+  fetchReceipts(value);
+};
 
   return (
   
@@ -301,8 +330,8 @@ pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
         </thead>
 
         <tbody>
-              {filteredReceipts?.length > 0 ? (
-                filteredReceipts.map((item, index) => (
+              {dataToShow?.length > 0 ? (
+    dataToShow.map((item, index) => (
             <tr key={item._id}>
               <td>{index + 1}</td>
               <td>{item.receiptNumber}</td>
@@ -340,6 +369,22 @@ pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
             )}
         </tbody>
           </table>
+
+
+          <div className="d-flex justify-content-between align-items-center mt-3">
+  <p>
+    showing <b>{page}</b> of <b>{totalPages}</b>
+  </p>
+
+  <Pagination
+    count={totalPages}
+    page={page}
+    onChange={handleChange}
+    color="primary"
+    showFirstButton
+    showLastButton
+  />
+</div>
           </div>
 </div>
       {/* ✅ MODAL FIXED */}

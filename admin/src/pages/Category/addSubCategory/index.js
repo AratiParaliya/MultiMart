@@ -248,7 +248,9 @@ const addSubCategory = (e) => {
     <div className="right-content w-100">
 
       <div className="card shadow border-0 w-100 flex-row p-4">
-          {isEdit ? "Update SubCategory" : "Publish and View"}
+        <h5 className="mb-0">
+  {isEdit ? "Edit SubCategory" : "Add SubCategory"}
+</h5>
                  <Breadcrumbs aria-label="breadcrumb" className="ml-auto breadcrumbs_">
                               
                               <StyledBreadcrumb

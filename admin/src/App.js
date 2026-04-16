@@ -1,6 +1,7 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css';
+
 import './responsive.css';
 
 import Dashboard from "./pages/Dashboard";
@@ -20,7 +21,7 @@ import LoadingBar from "react-top-loading-bar";
 import AddSubCategory from "./pages/Category/addSubCategory";
 import SubCategoryList from "./pages/Category/subcategoryList";
 import ProtectedRoute from "../src/components/protextedRoute";
-
+import { SearchProvider } from "./context/SearchContext";
  import Receipt from "./pages/Receipt";
 import { useLocation } from "react-router-dom";
 import AdminAuthHandler from "./AdminAuthHandler";
@@ -167,6 +168,7 @@ const addToCart = async (product, variant, variantType, qty = 1) => {
 
 
     <BrowserRouter>
+       <SearchProvider>
       <MyContext.Provider value={values}>
 <AdminAuthHandler/>
         <LoadingBar
@@ -230,7 +232,8 @@ const addToCart = async (product, variant, variantType, qty = 1) => {
 
           </div>
        
-       </MyContext.Provider>
+        </MyContext.Provider>+
+        </SearchProvider>
     </BrowserRouter>
   
   );

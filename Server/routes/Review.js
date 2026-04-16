@@ -154,11 +154,27 @@ router.get("/user-review", async (req, res) => {
 });
 router.get("/", async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;   // current page
+    const limit = parseInt(req.query.limit) || 10; // items per page
+
+    const skip = (page - 1) * limit;
+
+    const total = await Review.countDocuments();
+
     const reviews = await Review.find()
       .populate("userId", "name")
-      .populate("productId", "name");
+      .populate("productId", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    res.json({ reviews });
+    res.json({
+      success: true,
+      reviews,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
 
   } catch (err) {
     res.status(500).json({ error: err.message });

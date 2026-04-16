@@ -20,6 +20,7 @@ import Switch from "@mui/material/Switch";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 import { deleteData,  editData,  fetchDataFromApi } from "../../utils/api";
 import { MyContext } from "../../App";
+import { SearchContext } from "../../context/SearchContext";
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => {
   const backgroundColor =
@@ -50,20 +51,42 @@ const Users = () => {
 const [selectedUser, setSelectedUser] = useState(null);
     const context = useContext(MyContext);
   const [userData, setuserData] = useState([]);
+  const [page, setPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [totalUsers, setTotalUsers] = useState(0);
+  const { searchQuery } = useContext(SearchContext);
   
+ const filteredData = userData?.filter((item) =>
+  item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const dataToShow = searchQuery ? filteredData : userData;
 
+useEffect(() => {
+  fetchUsers(1);
+}, []);
 
-  useEffect(() => {
+const fetchUsers = (pageNo = 1) => {
   context.setProgress(40);
 
-  fetchDataFromApi("/api/user").then((res) => {
-    console.log("USER DATA:", res); // 👈 DEBUG
+  fetchDataFromApi(`/api/user?page=${pageNo}&limit=10`)
+    .then((res) => {
+      setuserData(res?.users || []);
+      setTotalPages(res?.totalPages || 1);
+      setTotalUsers(res?.totalUsers || 0);
+      setPage(res?.page || 1);
 
-    setuserData(res?.users || []);
-    context.setProgress(100);
-  });
+      context.setProgress(100);
+    })
+    .catch(() => context.setProgress(100));
+  };
+  
+const handleChange = (event, value) => {
+  setPage(value);
+ fetchUsers(page);
+  };
+  
 
-}, []);
 const deleteUser = (id) => {
   deleteData(`/api/user/${id}`).then(() => {
     fetchDataFromApi("/api/user").then((res) => {
@@ -124,8 +147,8 @@ const deleteUser = (id) => {
                         
                         {
 
-                           userData?.length > 0 ? (
-      userData.map((item, index) => (
+                          dataToShow?.length > 0 ? (
+    dataToShow.map((item, index) => (
                                
                                     <tr key={item._id}>
                                         <td>
@@ -230,14 +253,25 @@ style={{ width: 40, height: 40, borderRadius: "50%" }}
                                 </tbody>                                                    
 
                         </table>
-                         <div className="d-flex tableFooter">
-                   <p>
-  Showing <b>{userData.length}</b> users
-</p>
-                                                  
+                           <div className="d-flex justify-content-between align-items-center mt-3 mb-2">
+     <p>
+  Showing <b>{page}</b> of <b>{totalPages}</b> pages 
+
+                </p>
+                <Pagination
+  count={totalPages}
+  page={page}
+  onChange={handleChange}
+  color="primary"
+  showFirstButton
+  showLastButton
+/>
+           </div>                                       
                        </div>
                     </div>
-                    </div>
+          </div>
+          
+
 <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
   <DialogTitle>Update Verification</DialogTitle>
 
@@ -286,7 +320,7 @@ style={{ width: 40, height: 40, borderRadius: "50%" }}
     </Button>
   </DialogActions>
 </Dialog>
- </div>
+
                 
         </>
     )

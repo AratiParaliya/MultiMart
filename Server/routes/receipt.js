@@ -46,16 +46,36 @@ router.post("/create", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const receipts = await Receipt.find()
+    const { page = 1, limit = 10, keyword } = req.query;
+
+    const pageNumber = parseInt(page);
+    const pageSize = parseInt(limit);
+
+    let filter = {};
+
+    // 🔍 OPTIONAL SEARCH (backend search)
+    if (keyword) {
+      filter.$or = [
+        { receiptNumber: { $regex: keyword, $options: "i" } }
+      ];
+    }
+
+    const total = await Receipt.countDocuments(filter);
+
+    const receipts = await Receipt.find(filter)
       .populate("userId", "name email")
       .populate("orderId")
       .populate("paymentId")
-      .sort({ issuedAt: -1 });
+      .sort({ issuedAt: -1 })
+      .skip((pageNumber - 1) * pageSize)   // ✅ pagination
+      .limit(pageSize);
 
     res.json({
       success: true,
-      count: receipts.length,
-      receipts
+      receipts,
+      page: pageNumber,
+      totalPages: Math.ceil(total / pageSize),
+      totalItems: total
     });
 
   } catch (error) {

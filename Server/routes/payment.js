@@ -116,14 +116,35 @@ router.post("/verify-payment", async (req, res) => {
 // ✅ GET ALL PAYMENTS (FIX 404)
 router.get("/", async (req, res) => {
   try {
-    const payments = await Payment.find()
-      .populate("userId", "name")
-      .populate({
-        path: "orderId",
-        select: "orderItems", // 👈 IMPORTANT
-      });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    res.json({ payments });
+    const skip = (page - 1) * limit;
+
+    // ✅ ONLY PAID PAYMENTS COUNT
+    const total = await Payment.countDocuments({ status: "Paid" });
+
+    const payments = await Payment.find({ status: "Paid" }) // ✅ FILTER HERE
+      .populate("userId", "name")
+      .populate("orderId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // ✅ TOTAL AMOUNT (ONLY PAID)
+    const totalAmountAgg = await Payment.aggregate([
+      { $match: { status: "Paid" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    res.json({
+      success: true,
+      payments,
+      total,
+      totalAmount: totalAmountAgg[0]?.total || 0,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
 
   } catch (err) {
     res.status(500).json({ error: err.message });

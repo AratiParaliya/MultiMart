@@ -79,25 +79,36 @@ router.post("/upload", upload.single("image"), (req, res) => {
 // ✅ GET ALL BANNERS
 router.get("/", async (req, res) => {
   try {
-    const { type, status } = req.query;
+    const { type, status, page = 1, limit = 10 } = req.query;
 
     let filter = {};
 
-    // ✅ Filter by type (home, category, offer)
+    // ✅ Filter by type
     if (type) {
       filter.type = type;
     }
 
-    // ✅ Filter by status (true/false)
+    // ✅ Filter by status
     if (status !== undefined) {
       filter.status = status === "true";
     }
 
-    const banners = await Banner.find(filter).sort({ createdAt: -1 });
+    const pageNumber = parseInt(page);
+    const pageSize = parseInt(limit);
+
+    const total = await Banner.countDocuments(filter);
+
+    const banners = await Banner.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((pageNumber - 1) * pageSize)   // 🔥 pagination logic
+      .limit(pageSize);
 
     res.json({
       success: true,
-      data: banners
+      data: banners,
+      page: pageNumber,
+      totalPages: Math.ceil(total / pageSize),
+      totalItems: total
     });
 
   } catch (err) {

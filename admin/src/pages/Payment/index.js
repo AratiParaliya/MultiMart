@@ -17,6 +17,8 @@ import { useContext, useEffect} from "react";
 import { fetchDataFromApi, deleteData } from "../../utils/api";
 import { MyContext } from "../../App";
 import { IoMdCart } from "react-icons/io";
+import { SearchContext } from "../../context/SearchContext";
+import { Pagination } from "@mui/material";
 
 
 
@@ -49,28 +51,55 @@ const Payments = () => {
   
       const context = useContext(MyContext);
 const [paymentData, setPaymentData] = useState([]);
-
+const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPayments, setTotalPayments] = useState(0);
+const [totalAmount, setTotalAmount] = useState(0);
+  const { searchQuery } = useContext(SearchContext);
   
+const filteredData = paymentData?.filter((item) => {
+  const query = searchQuery.toLowerCase();
+
+  return (
+    item.userId?.name?.toLowerCase().includes(query) ||
+    item.paymentMethod?.toLowerCase().includes(query) ||
+    item.status?.toLowerCase().includes(query) ||
+    item._id?.toLowerCase().includes(query)
+  );
+});
   
+  const dataToShow = searchQuery ? filteredData : paymentData;
 
-const totalPayments = paymentData.length;
 
-const totalAmount = paymentData.reduce(
-  (sum, item) => sum + item.amount,
-  0
-);
-
+const handleChange = (event, value) => {
+  fetchPayments(value);
+};
 useEffect(() => {
+  fetchPayments(1);
+}, []);
+
+const fetchPayments = (pageNo) => {
   context.setProgress(40);
 
-  fetchDataFromApi("/api/payment")
+  fetchDataFromApi(`/api/payment?page=${pageNo}&limit=10`)
     .then((res) => {
-      console.log("PAYMENT DATA:", res);
-      setPaymentData(res.payments || []);
+
+      const paidOnly = (res.payments || []).filter(
+        (p) => p.status?.toLowerCase() === "paid"
+      );
+
+      setPaymentData(paidOnly);
+
+      setPage(res.page);
+      setTotalPages(res.totalPages);
+
+      setTotalPayments(res.total || 0);       // ✅ FIX
+      setTotalAmount(res.totalAmount || 0);   // ✅ FIX
+
       context.setProgress(100);
     })
     .catch(() => context.setProgress(100));
-}, []);
+};
 
 const deletePayment = (id) => {
   deleteData(`/api/payment/delete/${id}`)
@@ -145,33 +174,45 @@ const deletePayment = (id) => {
 
       <div className="table-responsive mt-3">
         <table className="table table-striped table-bordered v-align">
-         <thead className="thead-dark">
+    <thead className="thead-dark">
   <tr>
     <th>#</th>
     <th>User</th>
+    <th>Payment ID</th> {/* NEW */}
     <th>Amount</th>
     <th>Method</th>
+    <th>Razorpay ID</th> {/* NEW */}
     <th>Status</th>
-    <th>Order</th>
+    
     <th>Date</th>
     <th>Action</th>
   </tr>
 </thead>
 
-     <tbody>
-  {paymentData?.length > 0 ? (
-    paymentData.map((payment, index) => (
+   <tbody>
+  {dataToShow?.length > 0 ? (
+    dataToShow.map((payment, index) => (
       <tr key={payment._id}>
         <td>{index + 1}</td>
 
         {/* USER */}
-        <td>{payment.userId?.name}</td>
+        <td>{payment.userId?.name || "N/A"}</td>
+
+        {/* PAYMENT ID */}
+        <td>{payment._id.slice(-6).toUpperCase()}</td>
 
         {/* AMOUNT */}
         <td>₹{payment.amount}</td>
 
         {/* METHOD */}
         <td>{payment.paymentMethod}</td>
+
+        {/* RAZORPAY ID */}
+        <td>
+          {payment.razorpay_payment_id
+            ? payment.razorpay_payment_id
+            : "COD"}
+        </td>
 
         {/* STATUS */}
         <td>
@@ -188,18 +229,11 @@ const deletePayment = (id) => {
           </span>
         </td>
 
-        {/* ORDER */}
-       <td>
-  {payment.orderId?.orderItems?.map((item, i) => (
-    <div key={i}>
-      {item.name} × {item.quantity}
-    </div>
-  )) || "N/A"}
-</td>
+      
 
         {/* DATE */}
         <td>
-          {new Date(payment.createdAt).toLocaleDateString()}
+          {new Date(payment.createdAt).toLocaleDateString("en-IN")}
         </td>
 
         {/* ACTION */}
@@ -216,13 +250,28 @@ const deletePayment = (id) => {
     ))
   ) : (
     <tr>
-      <td colSpan="8" className="text-center">
+      <td colSpan="10" className="text-center">
         No Payments Found 😔
       </td>
     </tr>
   )}
 </tbody>
-        </table>
+              </table>
+  <div className="d-flex tableFooter">
+             <p>
+  showing <b>{page}</b> of <b>{totalPages}</b>
+</p>
+
+             <Pagination
+  className="pagination"
+  count={totalPages}
+  page={page}
+  color="primary"
+  onChange={handleChange}
+  showFirstButton
+  showLastButton
+/>
+            </div>
       </div>
    
 

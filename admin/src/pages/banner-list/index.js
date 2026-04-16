@@ -15,7 +15,7 @@ import { useEffect, useState, useContext } from "react";
 import { fetchDataFromApi, deleteData } from "../../utils/api";
 import { Link } from "react-router-dom";
 import { MyContext } from "../../App";
-
+import { SearchContext } from "../../context/SearchContext";
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => {
   const backgroundColor =
@@ -43,28 +43,40 @@ const StyledBreadcrumb = styled(Chip)(({ theme }) => {
 const BannerList = () => {
   const [bannerData, setBannerData] = useState([]);
   const context = useContext(MyContext);
-
+const { searchQuery } = useContext(SearchContext);
   const label = { inputProps: { "aria-label": "Checkbox demo" } };
+const [totalPages, setTotalPages] = useState(1);
+const [page, setPage] = useState(1);
 
+  
   useEffect(() => {
     window.scrollTo(0, 0);
     context.setProgress(30);
 
-    fetchDataFromApi("/api/banner").then((res) => {
-      setBannerData(res);
+
+ fetchDataFromApi("/api/banner").then((res) => {
+  setBannerData(res.data || []);
+  setTotalPages(res.totalPages || 1);
+  setPage(res.page || 1);
+
       context.setProgress(100);
     });
   }, []);
+
+const filteredData = bannerData?.filter((item) =>
+  item.title?.toLowerCase().includes(searchQuery.toLowerCase())
+);
+  
+  const dataToShow = searchQuery ? filteredData : bannerData;
 
   // ✅ DELETE BANNER
   const deleteBanner = async (id) => {
     try {
       await deleteData(`/api/banner/${id}`);
 
-      setBannerData((prev) => ({
-        ...prev,
-        data: prev.data.filter((item) => item._id !== id),
-      }));
+    setBannerData((prev) =>
+  prev.filter((item) => item._id !== id)
+);
 
       context.setAlertBox({
         open: true,
@@ -79,7 +91,9 @@ const BannerList = () => {
   // ✅ PAGINATION (optional if backend supports)
   const handleChange = (event, value) => {
     fetchDataFromApi(`/api/banner?page=${value}`).then((res) => {
-      setBannerData(res);
+      setBannerData(res.data || []);  
+     setTotalPages(res.totalPages || 1);   // ✅ important
+    setPage(res.page || 1);     
     });
   };
 
@@ -130,8 +144,9 @@ const BannerList = () => {
               </thead>
 
               <tbody>
-                {bannerData?.data?.length > 0 ? (
-                  bannerData.data.map((item, index) => (
+                {
+                   dataToShow?.length > 0 ? (
+    dataToShow.map((item, index) => (
                     <tr key={item._id}>
                       
                       {/* UID */}
@@ -210,18 +225,18 @@ const BannerList = () => {
             {/* PAGINATION */}
             <div className="d-flex tableFooter">
               <p>
-                showing <b>{bannerData?.page || 1}</b> of{" "}
-                <b>{bannerData?.totalPages || 1}</b>
+          showing <b>{page}</b> of <b>{totalPages}</b>
               </p>
 
-              <Pagination
-                className="pagination"
-                count={bannerData?.totalPages || 1}
-                color="primary"
-                onChange={handleChange}
-                showFirstButton
-                showLastButton
-              />
+             <Pagination
+  className="pagination"
+  count={totalPages}
+  page={page}
+  color="primary"
+  onChange={handleChange}
+  showFirstButton
+  showLastButton
+/>
             </div>
           </div>
         </div>

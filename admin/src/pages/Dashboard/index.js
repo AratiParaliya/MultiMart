@@ -103,34 +103,34 @@ setRevenueData(revenueChartData);
 // 📊 ORDERS vs PAYMENTS
 const ordersD = orders?.data || orders?.orders || [];
 
-console.log("ORDERS DATA:", ordersData);
+console.log("ORDERS DATA:", ordersD);
 
 const totalOrders = ordersD.length;
 
 const paidOrders = ordersD.filter(
-  (o) => ["Paid", "delivered", "success"].includes(o.status?.toLowerCase())
+  (o) => ["paid", "delivered", "success"].includes(o.status?.toLowerCase())
 ).length;
 
 const pendingOrders = ordersD.filter(
-   (o) => ["Pending", "Processing"].includes(o.status?.toLowerCase())
+  (o) => ["pending", "processing"].includes(o.status?.toLowerCase())
 ).length;
 
 const cancelledOrders = ordersD.filter(
-  (o) => o.status?.toLowerCase() === "Cancelled"
+  (o) => o.status?.toLowerCase() === "cancelled"
 ).length;
 
 console.log("Paid:", paidOrders);
 console.log("Pending:", pendingOrders);
-console.log("Cancelled:", cancelledOrders);
-
-const orderPaymentChart = [
+      console.log("Cancelled:", cancelledOrders);
+      
+const orderVsPaymentData = [
   ["Type", "Count"],
-  ["Paid Orders", paidOrders || 0],
-  ["Pending Orders", pendingOrders || 0],
-  ["Cancelled Orders", cancelledOrders || 0]
+  ["Paid Orders", paidOrders],
+  ["Pending Orders", pendingOrders],
+  ["Cancelled Orders", cancelledOrders]
 ];
 
-setOrderVsPaymentData(orderPaymentChart);
+setOrderVsPaymentData(orderVsPaymentData);
 
 
 
@@ -286,24 +286,24 @@ setOrderVsPaymentData(orderPaymentChart);
   </div>
 
   {/* 📊 ORDERS vs PAYMENTS */}
-  <div className="col-md-4">
-    <div className="card shadow border-0 p-3 h-100">
-      <h5 className="mb-3">📊 Orders vs Payments</h5>
+<div className="col-md-4">
+  <div className="card shadow border-0 p-3 h-100">
+    <h5 className="mb-3">📊 Orders vs Payments</h5>
 
-     {orderVsPaymentData.length > 1 && (
-  <Chart
-    chartType="PieChart"
-    width="100%"
-    height="300px"
-    data={orderVsPaymentData}
-    options={{
-      backgroundColor: "transparent",
-      chartArea: { width: "90%", height: "80%" }
-    }}
-  />
-)}
-    </div>
+    {orderVsPaymentData.length > 1 && (
+      <Chart
+        chartType="PieChart"
+        width="100%"
+        height="300px"
+        data={orderVsPaymentData}
+        options={{
+          backgroundColor: "transparent",
+          chartArea: { width: "90%", height: "80%" }
+        }}
+      />
+    )}
   </div>
+</div>
 
 </div>
 <div className="card shadow  mt-4">

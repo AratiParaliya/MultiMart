@@ -83,15 +83,22 @@ const SignIn = () => {
       // ✅ SUCCESS
       context.setAlertBox({ open: true, error: false, msg: "Login successful!" });
       context.setisLogin(true);
-
+      context.setisHeaderFooterShow(true);
+      
       setTimeout(() => {
         const role = res.user?.role?.toLowerCase().trim();
+
+
         if (role === "admin") {
           const token = res.token;
           const user = encodeURIComponent(JSON.stringify({
             _id: res.user._id, name: res.user.name, role: res.user.role
           }));
+
+
           window.location.href = `http://localhost:3001/admin/dashboard?token=${token}&user=${user}`;
+
+          
         } else {
           localStorage.setItem("token", res.token);
           localStorage.setItem("user", JSON.stringify(res.user));

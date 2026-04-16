@@ -747,7 +747,7 @@ renderValue={(selected) => Array.isArray(selected) ? selected.join(', ') : ""}
 
   {
     (formFields.specifications || []).map((spec, index) => (
-      <div className="row mb-2" key={index}>
+      <div className="row specification mb-2" key={index}>
         
         {/* Key */}
         <div className="col w-100">

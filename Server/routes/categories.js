@@ -54,15 +54,28 @@ router.post('/upload', upload.array("images"), async (req, res) => {
 // ================= GET =================
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find().sort({ _id: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    res.status(200).json(categories);
+    const skip = (page - 1) * limit;
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
+    const totalCategories = await Category.countDocuments();
+
+    const categories = await Category.find()
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      categories,              // ✅ IMPORTANT
+      totalCategories,
+      totalPages: Math.ceil(totalCategories / limit),
+      page
     });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 router.get('/all', async (req, res) => {

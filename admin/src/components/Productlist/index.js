@@ -17,6 +17,7 @@ import { deleteData, editData, fetchDataFromApi, postData } from "../../utils/ap
 import { MyContext } from "../../App";
 
 import { useLocation } from "react-router-dom";
+import { SearchContext } from "../../context/SearchContext";
 
 
 const Productlist = () => {
@@ -28,9 +29,17 @@ const Productlist = () => {
     const [catBy, setCatBy] = useState('');
  const [productData, setProductData] = useState([]);
   const [categories, setCategories] = useState([]);
- 
-const searchQuery = context.searchQuery;
+const { searchQuery } = useContext(SearchContext);
 
+     const products = Array.isArray(productData?.products)
+  ? productData.products
+    : [];
+  
+ 
+const filteredData = products?.filter((item) =>
+  item.name.toLowerCase().includes(searchQuery.toLowerCase())
+);
+const dataToShow = searchQuery ? filteredData : products;
     
 
 useEffect(() => {
@@ -43,9 +52,7 @@ useEffect(() => {
   }
 
   // ✅ INSTANT SEARCH
-  if (searchQuery && searchQuery.trim() !== "") {
-    url += `&search=${searchQuery}`;
-  }
+
 
   console.log("FINAL API URL:", url);
 
@@ -54,7 +61,7 @@ useEffect(() => {
     context.setProgress(100);
   });
 
-}, [showBy, catBy, searchQuery]); 
+}, [showBy, catBy]); 
 
 
  useEffect(() => {
@@ -100,9 +107,9 @@ fetchDataFromApi(`/api/products?page=${productData?.page || 1}`).then((res)=>{
              })
     }
 
-   const products = Array.isArray(productData?.products)
-  ? productData.products
-  : [];
+
+  
+  
     return (
         <>
 
@@ -180,8 +187,8 @@ fetchDataFromApi(`/api/products?page=${productData?.page || 1}`).then((res)=>{
                         
                         {
 
-                           products?.length > 0 ? (
-      products.map((item, index) => (
+                          dataToShow?.length > 0 ? (
+    dataToShow.map((item, index) => (
                                
                                     <tr key={item._id}>
                                         <td>

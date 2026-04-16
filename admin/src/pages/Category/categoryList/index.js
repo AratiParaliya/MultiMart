@@ -15,16 +15,11 @@ import { useEffect } from "react";
 import { deleteData, editData, fetchDataFromApi, postData } from "../../../utils/api";
   
   import { useRef } from "react";
-import TextField from "@mui/material/TextField";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import CircularProgress from "@mui/material/CircularProgress";
+
 import { Link } from "react-router-dom";
 import { useContext } from "react";
 import { MyContext } from "../../../App";
-
+import { SearchContext } from "../../../context/SearchContext";
 
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => {
@@ -54,8 +49,12 @@ const StyledBreadcrumb = styled(Chip)(({ theme }) => {
 const CategoryList = () => {
 
     const [catData, setCatData] = useState([]);
-    const [open, setOpen] = useState(false);
- 
+   
+  const { searchQuery } = useContext(SearchContext);
+
+const [page, setPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [totalCategories, setTotalCategories] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [editId, setEditId] = useState(null);
 const [catImagesArr, setCatImagesArr] = useState([]);
@@ -70,25 +69,43 @@ const fileInputRef = useRef();
     const context = useContext(MyContext);
   const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
   
+useEffect(() => {
+  window.scrollTo(0, 0);
+  fetchCategories(1);
+}, []);
+  
+ const fetchCategories = (pageNo = 1) => {
+  context.setProgress(40);
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-       context.setProgress(20)
-        fetchDataFromApi("/api/category").then((res) => {
-            setCatData(res);
-            console.log(res);
-            context.setProgress(100)
-        })
-    }, []);
+  fetchDataFromApi(`/api/category?page=${pageNo}&limit=10`)
+    .then((res) => {
+      setCatData(res?.categories || []);   // ✅ array only
+      setTotalPages(res?.totalPages || 1);
+      setTotalCategories(res?.totalCategories || 0);
+      setPage(res?.page || 1);
+
+      context.setProgress(100);
+    })
+    .catch(() => context.setProgress(100));
+};
 
     
+const filteredData = catData?.filter((item) =>
+  item.name.toLowerCase().includes(searchQuery.toLowerCase())
+);
+
+const dataToShow = searchQuery ? filteredData : catData;
+
+const handleChange = (event, value) => {
+  setPage(value);
+  fetchCategories(value);
+};
 
 const deleteCategory = async (id) => {
   try {
     await deleteData(`/api/category/${id}`);
 
-    // ✅ Remove from UI instantly
-  setCatData((prev) => prev.filter(item => item._id !== id));
+    fetchCategories(page); // ✅ refresh current page
 
     context.setAlertBox({
       open: true,
@@ -101,14 +118,7 @@ const deleteCategory = async (id) => {
   }
 };
 
-    const handleChange = (event, value) => {
-        context.setProgress(40);
-        fetchDataFromApi(`/api/category?page=${value}`).then((res) => {
-            setCatData(res);
-              context.setProgress(0);
-          
-        })
-    };
+  
 
     return (
         <>
@@ -155,60 +165,83 @@ const deleteCategory = async (id) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {
-                                  catData?.length > 0?( catData?.map((item, index) => (                                       
-                                             <tr>
-                            <td>
-                                <div className="d-flex align-items-center">
-                                                        <Checkbox{...label} />     <span> # {index + 1}</span>
-                                </div>
-                                                </td>
-                                                 <td>
-                                        <div className="d-flex CategoryBox align-items-center">
-                                            <div className="imgWrapper">
-                                                <div className="img">
-                                                    <img src={item.images[0]} className="w-100"/>
-                                                </div>
-                                                        </div>
-                                                        
-                                        </div>
-                                       
-                                    
-                                    </td>
-                                                 <td> {item.name} </td>
-                                   
-                                                <td>
-                                                    <span className="dot d-flex justify-content-center align-items-center w-100" style={{background:item.color}}><p className="align-items-center pl-2" >{item.color} </p></span>
-                                                </td>
-                                    <td>
-                                <div className="actions d-flex align-items-center">
-                                 <Link to={`/category/add/${item._id}`}>
-  <Button className="success" color="success">
-    <FaPencilAlt />
-  </Button>
-</Link>
-                                            <Button className="error" color="error" onClick={()=>deleteCategory(item._id)}><MdDelete/></Button>
-                                        </div>
-                                    </td>
+{
+  dataToShow?.length > 0 ? (
+    dataToShow.map((item, index) => (
+      <tr key={item._id}>
+        <td>
+          <div className="d-flex align-items-center">
+            <Checkbox {...label} />
+            <span> # {index + 1}</span>
+          </div>
+        </td>
 
-                                </tr>
-                                        )
-                                    )) :(
-      <tr>
-        <td colSpan="10" className="text-center py-4">
-          <h5 className="text-muted">No Products Found 😔</h5>
+        <td>
+          <div className="d-flex CategoryBox align-items-center">
+            <div className="imgWrapper">
+              <div className="img">
+                <img src={item.images[0]} className="w-100" />
+              </div>
+            </div>
+          </div>
+        </td>
+
+        <td>{item.name}</td>
+
+        <td>
+          <span
+            className="dot d-flex justify-content-center align-items-center w-100"
+            style={{ background: item.color }}
+          >
+            <p className="align-items-center pl-2">{item.color}</p>
+          </span>
+        </td>
+
+        <td>
+          <div className="actions d-flex align-items-center">
+            <Link to={`/category/add/${item._id}`}>
+              <Button className="success" color="success">
+                <FaPencilAlt />
+              </Button>
+            </Link>
+
+            <Button
+              className="error"
+              color="error"
+              onClick={() => deleteCategory(item._id)}
+            >
+              <MdDelete />
+            </Button>
+          </div>
         </td>
       </tr>
-    )
-                                }
+    ))
+  ) : (
+    <tr>
+      <td colSpan="10" className="text-center py-4">
+        <h5 className="text-muted">No Categories Found 😔</h5>
+      </td>
+    </tr>
+  )
+}
                                
                                 </tbody>                                                    
 
                         </table>
-                        <div className="d-flex tableFooter">
-                            <p>showing <b>{catData?.page}</b> of <b>{catData?.totalPages }</b> results</p>
-                            <Pagination count={catData?.totalPages} color="primary" className="pagination" onChange={handleChange}
-                            showFirstButton showLastButton/>
+    <div className="d-flex justify-content-between align-items-center mt-3">
+  <p>
+    Showing <b>{page}</b> of <b>{totalPages}</b> pages  
+    
+  </p>
+
+  <Pagination
+    count={totalPages}
+    page={page}
+    onChange={handleChange}
+    color="primary"
+    showFirstButton
+    showLastButton
+  />
 </div>
                     </div>
                 </div>

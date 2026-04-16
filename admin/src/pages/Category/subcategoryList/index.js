@@ -24,6 +24,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { Link } from "react-router-dom";
 import { useContext } from "react";
 import { MyContext } from "../../../App";
+import { SearchContext } from "../../../context/SearchContext";
 
 
 
@@ -68,7 +69,7 @@ const SubCategoryList = () => {
     })
     const context = useContext(MyContext);
      const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
-
+const { searchQuery } = useContext(SearchContext);
     
   useEffect(() => {
   window.scrollTo(0, 0);
@@ -122,7 +123,17 @@ const SubCategoryEditFun = (e) => {
         
     });
     
-};
+ 
+  };
+  
+
+
+ const filteredData = subCatData.subcategoryList?.filter((item) =>
+  item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const dataToShow = searchQuery ? filteredData : subCatData.subcategoryList;
+
   const handleChangeCategory = (event) => {
   setSubcategory(event.target.value);
 
@@ -252,7 +263,8 @@ const deleteSubCategory = (id) => {
                             </thead>
                             <tbody>
                                 {
-                                    subCatData?.subcategoryList?.length > 0 ?( subCatData?.subcategoryList?.map((item, index) => (
+                                     dataToShow?.length > 0 ? (
+    dataToShow.map((item, index) => (
                                        
                                              <tr>
                             <td>

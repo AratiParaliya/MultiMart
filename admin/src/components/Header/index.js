@@ -74,7 +74,7 @@ const user = JSON.parse(localStorage.getItem("user") || "null");
                     <MdOutlineMenu/>
                 }
                 </Button>
-                             <SearchBox setSearchQuery={context.setSearchQuery}/>   
+                             <SearchBox />   
 
                         </div>
             }
@@ -93,7 +93,7 @@ const user = JSON.parse(localStorage.getItem("user") || "null");
                             <Button className="rounded-circle mr-3"><MdOutlineMailOutline/></Button> */}
                         <div className="dropdownwrapper position-relative">
                             
-                                        <Button className="rounded-circle mr-3"onClick={handleOpennotificationsDrop}><FaRegBell/></Button>
+                                        {/* <Button className="rounded-circle mr-3"onClick={handleOpennotificationsDrop}><FaRegBell/></Button> */}
   <Menu
                             anchorEl={isOpennotificationsDrop}
                             className="notifications dropdown_list"

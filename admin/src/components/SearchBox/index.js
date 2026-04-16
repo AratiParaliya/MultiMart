@@ -1,28 +1,29 @@
-import { IoSearch } from 'react-icons/io5';
-import { useState, useEffect } from 'react';
+import { IoSearch } from "react-icons/io5";
+import { useState, useEffect, useContext } from "react";
+import { SearchContext } from "../../context/SearchContext";
 
-const SearchBox = ({ setSearchQuery }) => {
-
+const SearchBox = () => {
+  const { setSearchQuery } = useContext(SearchContext);
   const [query, setQuery] = useState("");
 
-  // ✅ INSTANT SEARCH (LIVE)
   useEffect(() => {
     const delay = setTimeout(() => {
-      setSearchQuery(query);   // 🔥 THIS IS MAIN LINE
-    }, 500); // debounce
+      setSearchQuery(query);
+    }, 500);
 
     return () => clearTimeout(delay);
   }, [query]);
 
   return (
     <div className="searchBox position-relative d-flex align-items-center">
-      <IoSearch />
+      <IoSearch className="me-2" />
 
       <input
         type="text"
-        placeholder="Search here...."
+        placeholder="Search anything..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        className="form-control"
       />
     </div>
   );

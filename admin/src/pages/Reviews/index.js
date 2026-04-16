@@ -16,6 +16,8 @@ import Button from "@mui/material/Button";
 import { useContext, useEffect} from "react";
 import { fetchDataFromApi, deleteData } from "../../utils/api";
 import { MyContext } from "../../App";
+import { SearchContext } from "../../context/SearchContext";
+import { Pagination } from "@mui/material";
 
 
 
@@ -48,21 +50,52 @@ const Reviews = () => {
   
       const context = useContext(MyContext);
  const [reviewData, setReviewData] = useState([]);
+  const { searchQuery } = useContext(SearchContext);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalReviews, setTotalReviews] = useState(0);
+
+
+const filteredData = reviewData?.filter((review) => {
+  const query = searchQuery.toLowerCase();
+
+  return (
+    review.userId?.name?.toLowerCase().includes(query) ||
+    review.productId?.name?.toLowerCase().includes(query) ||
+    review.reviewText?.toLowerCase().includes(query) ||
+    review.rating?.toString().includes(query)
+  );
+});
+  
+  const dataToShow = searchQuery ? filteredData : reviewData;
 
 
 
-useEffect(() => {
+  
+  
+const getReviews = (pageNo = 1) => {
   context.setProgress(40);
 
-  fetchDataFromApi("/api/reviews")
+  fetchDataFromApi(`/api/reviews?page=${pageNo}&limit=10`)
     .then((res) => {
-      console.log("REVIEW DATA:", res);
       setReviewData(res.reviews || []);
+      setTotalPages(res.totalPages || 1);
+      setPage(res.page || 1);
+      setTotalReviews(res.total || 0);   // ✅ ADD THIS
       context.setProgress(100);
     })
     .catch(() => context.setProgress(100));
-}, []);
+};
 
+useEffect(() => {
+  getReviews(page);
+}, []);
+  
+  const handleChange = (event, value) => {
+  setPage(value);
+  getReviews(value);
+};
+  
 const deleteReview = (id) => {
   deleteData(`/api/reviews/delete/${id}`)
     .then(() => {
@@ -115,7 +148,7 @@ const deleteReview = (id) => {
   color={["#1da256", "#48d483"]}
   icon={<FaUserCircle />}
   title="Total Reviews"
-  value={reviewData.length}
+value={totalReviews} 
 />
 
     
@@ -143,8 +176,8 @@ const deleteReview = (id) => {
 </thead>
 
         <tbody>
-  {reviewData?.length > 0 ? (
-    reviewData.map((review, index) => (
+  {dataToShow?.length > 0 ? (
+    dataToShow.map((review, index) => (
       <tr key={review._id}>
         <td>{index + 1}</td>
 
@@ -198,7 +231,23 @@ const deleteReview = (id) => {
     </tr>
   )}
 </tbody>
-        </table>
+              </table>
+              
+              <div className="d-flex justify-content-between align-items-center mt-3">
+  <p>
+    Showing <b>{page}</b> of <b>{totalPages}</b> pages
+  </p>
+
+  <Pagination
+    count={totalPages}
+    page={page}
+    onChange={handleChange}
+    color="primary"
+    showFirstButton
+    showLastButton
+  />
+              </div>
+              
       </div>
    
 

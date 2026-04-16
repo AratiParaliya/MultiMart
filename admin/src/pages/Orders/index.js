@@ -26,6 +26,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
 import { useNavigate } from "react-router-dom";
+import { SearchContext } from "../../context/SearchContext";
 
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => {
@@ -61,12 +62,32 @@ const [selectedOrder, setSelectedOrder] = useState(null);
 const [status, setStatus] = useState("");
 const [isPaid, setIsPaid] = useState(false);
   const [orderData, setOrderData] = useState([]);
-  const totalRevenue = orderData.reduce((sum, order) => sum + order.totalPrice, 0);
-
+  const [page, setPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [totalOrders, setTotalOrders] = useState(0); 
+const [totalRevenue, setTotalRevenue] = useState(0);
+const { searchQuery } = useContext(SearchContext);
 
   const navigate = useNavigate();
 
 
+  
+const filteredData = orderData?.filter((order) => {
+  const query = searchQuery.toLowerCase();
+
+  return (
+    order._id?.toLowerCase().includes(query) ||
+    order.userId?.name?.toLowerCase().includes(query) ||
+    order.userId?.email?.toLowerCase().includes(query) ||
+    order.paymentMethod?.toLowerCase().includes(query) ||
+    order.status?.toLowerCase().includes(query) ||
+    order.orderItems?.some(item =>
+      item.name?.toLowerCase().includes(query)
+    )
+  );
+});
+  
+  const dataToShow = searchQuery ? filteredData : orderData;
   
 const getStatusColor = (status) => {
   switch (status) {
@@ -140,21 +161,31 @@ const updateOrder = async () => {
   
 
 useEffect(() => {
-  context.setProgress(40);
-
-  fetchDataFromApi("/api/orders")
-    .then((res) => {
-      console.log("ORDER DATA:", res);
-
-      setOrderData(res.orders || []); // ✅ FIX
-      context.setProgress(100);
-    })
-    .catch((err) => {
-      console.log(err);
-      context.setProgress(100);
-    });
+  fetchOrders(1);
 }, []);
 
+ const fetchOrders = (pageNo = 1) => {
+  context.setProgress(40);
+
+  fetchDataFromApi(`/api/orders?page=${pageNo}&limit=10`)
+    .then((res) => {
+      setOrderData(res.orders || []);
+      setTotalPages(res.totalPages || 1);
+      setPage(res.page || 1);
+      setTotalOrders(res.totalOrders || 0);
+
+      setTotalRevenue(res.totalRevenue || 0); // ✅ FIX HERE
+
+      context.setProgress(100);
+    })
+    .catch(() => context.setProgress(100));
+};
+  
+  const handleChange = (event, value) => {
+  setPage(value);
+  fetchOrders(value);
+};
+  
 const deleteOrder = (id) => {
   deleteData(`/api/orders/${id}`).then(() => {
 
@@ -202,14 +233,14 @@ const deleteOrder = (id) => {
   <div className="col-md-12">
     <div className="dashboardBoxWrapper d-flex">
 
-     <DashboardBox
+<DashboardBox
   color={["#1da256", "#48d483"]}
   icon={<FaUserCircle />}
   title="Total Orders"
-  value={orderData.length}
+  value={totalOrders}   
 />
 
-  <DashboardBox
+<DashboardBox
   color={["#c012e2", "#eb64fe"]}
   icon={<IoMdCart />}
   title="Total Revenue"
@@ -249,8 +280,8 @@ const deleteOrder = (id) => {
           </thead>
 
           <tbody>
-            {orderData?.length > 0 ? (
-              orderData.map((order, index) => (
+            {dataToShow?.length > 0 ? (
+    dataToShow.map((order, index) => (
                 <tr key={order._id}>
                   <td>{index + 1}</td>
 <td>{order._id.slice(-6).toUpperCase()}</td>
@@ -330,7 +361,21 @@ const deleteOrder = (id) => {
               </tr>
             )}
           </tbody>
-        </table>
+              </table>
+              <div className="d-flex justify-content-between align-items-center mt-3">
+  <p>
+    Showing <b>{page}</b> of <b>{totalPages}</b> pages
+  </p>
+
+  <Pagination
+    count={totalPages}
+    page={page}
+    onChange={handleChange}
+    color="primary"
+    showFirstButton
+    showLastButton
+  />
+</div>
       </div>
    
 

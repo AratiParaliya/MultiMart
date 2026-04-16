@@ -89,14 +89,43 @@ if (user?.email) {
 // GET all orders
 router.get('/', async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+    // ✅ Total Orders
+    const totalOrders = await Order.countDocuments();
+
+    // ✅ Total Revenue (ALL ORDERS)
+    const revenueData = await Order.aggregate([
+      {
+        $match: { isPaid: true } // ✅ ONLY PAID (IMPORTANT)
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$totalPrice" }
+        }
+      }
+    ]);
+
+    const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
+
+    // ✅ Paginated Orders
     const orders = await Order.find()
-      .populate("userId", "name email") // ✅ FIX HERE
-      .sort({ createdAt: -1 });
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.status(200).json({
       success: true,
-      count: orders.length,
-      orders
+      orders,
+      totalOrders,
+      totalRevenue, // ✅ RETURN THIS
+      totalPages: Math.ceil(totalOrders / limit),
+      page
     });
 
   } catch (error) {
