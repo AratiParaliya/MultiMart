@@ -123,9 +123,7 @@ const MyOrders = () => {
 
   return (
     <>
-      <style>{`
-
-      `}</style>
+     
 
       <div className="mo-page">
         {/* header */}
@@ -208,7 +206,7 @@ const MyOrders = () => {
                               {hasReview.images.map((img, i) => (
                                 <img
                                   key={i}
-                                  src={img.startsWith("http") ? img : `http://localhost:4000/${img}`}
+                                  src={img.startsWith("http") ? img : `https://server-l4qe.onrender.com/${img}`}
                                   alt="review"
                                 />
                               ))}
@@ -301,7 +299,7 @@ const MyOrders = () => {
           {existingReview?.images?.length > 0 && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
               {existingReview.images.map((img, i) => (
-                <img key={i} src={img.startsWith("http") ? img : `http://localhost:4000/${img}`} alt="existing"
+                <img key={i} src={img.startsWith("http") ? img : `https://server-l4qe.onrender.com/${img}`} alt="existing"
                   style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }} />
               ))}
             </div>

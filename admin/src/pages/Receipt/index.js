@@ -13,6 +13,7 @@ import { MdDelete } from "react-icons/md";
 import QRCode from "qrcode";
 import { SearchContext } from "../../context/SearchContext";
 import { Pagination } from "@mui/material";
+import { fetchDataFromApi } from "../../utils/api";
 
 
 const StyledBreadcrumb = styled(Chip)(({ theme }) => {
@@ -203,13 +204,11 @@ pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
 };
 
   // ✅ FETCH
- const fetchReceipts = async (pageNo = 1) => {
+const fetchReceipts = async (pageNo = 1) => {
   try {
-    const res = await fetch(
-      `http://localhost:4000/api/receipts?page=${pageNo}&limit=10`
+    const data = await fetchDataFromApi(
+      `/api/receipts?page=${pageNo}&limit=10`
     );
-
-    const data = await res.json();
 
     setReceipts(data.receipts || []);
     setPage(data.page || 1);

@@ -49,12 +49,14 @@ const ProductDetails = () => {
     setReviews(res?.reviews || []);
   };
 
-  const getProductDetails = async () => {
-    try {
-      const res = await axios.get(`http://localhost:4000/api/products/${id}`);
-      setProduct(res.data);
-    } catch (e) { console.log(e); }
-  };
+ const getProductDetails = async () => {
+  try {
+    const data = await fetchDataFromApi(`/api/products/${id}`);
+    setProduct(data);
+  } catch (e) {
+    console.log(e);
+  }
+};
 
   const isLoggedIn = () => !!localStorage.getItem("user") && !!localStorage.getItem("token");
 

@@ -1,10 +1,10 @@
 import axios from "axios";
 
-
+const BASE_URL = "https://server-l4qe.onrender.com";
 export const fetchDataFromApi = async (url, options = {}) => {
     try {
         const { data } = await axios.get(
-            "http://localhost:4000" + url,
+            `${BASE_URL}${url}`,
             {
                 headers: {
                     ...(options.headers || {})
@@ -32,7 +32,7 @@ export const fetchDataFromApi1 = async (url, data = null) => {
   }
 };
 
-const BASE_URL = "http://localhost:4000";
+
 
 export const postData = async (url, data) => {
   try {
@@ -66,7 +66,7 @@ export const editData = async (url, data, isFormData = false) => {
     const token = localStorage.getItem("token");
 
     const res = await axios.put(
-      "http://localhost:4000" + url,
+      `${BASE_URL}${url}`,
       data,
       {
         headers: {
@@ -85,7 +85,7 @@ export const editData = async (url, data, isFormData = false) => {
 
 export const deleteData = async (url, bodyData) => {
   try {
-    const res = await axios.delete(`http://localhost:4000${url}`, {
+    const res = await axios.delete(`${BASE_URL}${url}`, {
       data: bodyData   // ✅ IMPORTANT
     });
     return res.data;
@@ -98,7 +98,7 @@ export const deleteData = async (url, bodyData) => {
 export const postFormData = async (url, formData) => {
   try {
     const response = await axios.post(
-      `http://localhost:4000${url}`,
+      `${BASE_URL}${url}`,
       formData,
       {
         headers: {
@@ -115,7 +115,7 @@ export const postFormData = async (url, formData) => {
 export const putFormData = async (url, formData) => {
   try {
     const response = await axios.put(
-      `http://localhost:4000${url}`,
+      `${BASE_URL}${url}`,
       formData,
       {
         headers: {

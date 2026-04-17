@@ -25,18 +25,16 @@ const [brands, setBrands] = useState([]);
       getCategoryBanners(); 
   }, []);
 
-  const getCategories = async () => {
-    try {
-      const res = await fetch("http://localhost:4000/api/subCategory");
-        const data = await res.json();
+const getCategories = async () => {
+  try {
+    const data = await fetchDataFromApi("/api/subCategory");
 
-        console.log("API DATA:", data);
+    setCategories(data.subcategoryList || []);
 
-   setCategories(data.subcategoryList || []);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   const getBrands = async () => {
   const res = await fetchDataFromApi("/api/products/brands");

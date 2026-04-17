@@ -9,6 +9,7 @@ import { Navigation as SwiperNavigation, FreeMode } from 'swiper/modules';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { fetchDataFromApi } from '../../utils/api';
 
 const Navigation = () => {
   const [isOpenSidebarVal, setisOpenSidebarVal] = useState(false);
@@ -34,149 +35,35 @@ const Navigation = () => {
 const getMeta = (name = '') => CAT_META[name] || { icon: '🏷️', accent: '#f1f5f9' };
   
   
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const catRes = await axios.get("http://localhost:4000/api/category/all");
-        const subRes = await axios.get("http://localhost:4000/api/subCategory/all");
-        const finalData = catRes.data.map(cat => ({
-          ...cat,
-          subcategories: subRes.data.filter(sub => sub.category?._id === cat._id)
-        }));
-        setCategories(finalData);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchData();
-  }, []);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const catRes = await fetchDataFromApi("/api/category/all");
+      const subRes = await fetchDataFromApi("/api/subCategory/all");
+
+      const categories = catRes?.data || catRes || [];
+      const subCategories = subRes?.data || subRes || [];
+
+      const finalData = categories.map(cat => ({
+        ...cat,
+        subcategories: subCategories.filter(
+          sub => sub.category?._id === cat._id
+        )
+      }));
+
+      setCategories(finalData);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  fetchData();
+}, []);
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-
-        nav {
-          background: #fff;
-          border-bottom: 1px solid #f1f1f1;
-          font-family: 'DM Sans', sans-serif;
-        }
-
-        /* Category Button Design */
-        .allCatTab {
-          background: #233a95 !important;
-          color: #fff !important;
-          border-radius: 30px !important;
-          padding: 10px 25px !important;
-          font-weight: 700 !important;
-          font-size: 13px !important;
-          text-transform: uppercase !important;
-        }
-
-        /* Sidebar dropdown styling */
-        .sidebarNav {
-          position: absolute;
-          top: 110%;
-          left: 0;
-          width: 250px;
-          background: #fff;
-          border: 1px solid #f1f1f1;
-          border-radius: 10px;
-          z-index: 1000;
-          transition: all 0.3s ease;
-          opacity: 0;
-          visibility: hidden;
-          transform: translateY(10px);
-        }
-        .sidebarNav.open {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(0);
-        }
-        .sidebarNav ul li {
-          list-style: none;
-          border-bottom: 1px solid #f1f1f1;
-        }
-        .sidebarNav button {
-          width: 100% !important;
-          justify-content: flex-start !important;
-          padding: 12px 20px !important;
-          color: #343a40 !important;
-          font-weight: 500 !important;
-          text-transform: capitalize !important;
-        }
-        .sidebarNav button:hover {
-          background: #f8f9fa !important;
-          color: #233a95 !important;
-        }
-
-        /* Swiper Links Design */
-        .nav-link-btn {
-          color: #343a40 !important;
-          font-weight: 700 !important;
-          font-size: 14px !important;
-          padding: 15px 20px !important;
-          transition: all 0.3s !important;
-          position: relative;
-        }
-        .nav-link-btn:hover {
-          color: #233a95 !important;
-        }
-        
-        /* Animated underline for nav items */
-        .nav-link-btn::after {
-          content: '';
-          position: absolute;
-          bottom: 10px;
-          left: 50%;
-          width: 0;
-          height: 2px;
-          background: #233a95;
-          transition: 0.3s ease;
-          transform: translateX(-50%);
-        }
-        .nav-link-btn:hover::after {
-          width: 40%;
-        }
-
-        /* Submenu (Floating outside swiper) */
-        .submenu-floating {
-          background: #fff;
-          border-radius: 8px;
-          padding: 10px 0;
-          min-width: 180px;
-          z-index: 2000;
-          border: 1px solid #eee;
-          transition: 0.2s ease-in-out;
-        }
-        .submenu-floating button {
-          width: 100% !important;
-          justify-content: flex-start !important;
-          padding: 8px 20px !important;
-          color: #666 !important;
-          font-size: 13px !important;
-          font-weight: 500 !important;
-        }
-        .submenu-floating button:hover {
-          background: #f0f2f5 !important;
-          color: #233a95 !important;
-        }
-
-        .categorySwiper .swiper-button-next, 
-        .categorySwiper .swiper-button-prev {
-          width: 30px !important;
-          height: 30px !important;
-          background: #fff !important;
-          border-radius: 50%;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .categorySwiper .swiper-button-next::after, 
-        .categorySwiper .swiper-button-prev::after {
-          font-size: 12px !important;
-          font-weight: bold;
-          color: #000;
-        }
-      `}</style>
+      
 
       <nav>
         <div className="container">

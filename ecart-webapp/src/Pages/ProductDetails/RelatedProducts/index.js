@@ -10,6 +10,7 @@ import 'swiper/css/navigation';
 import { Navigation } from 'swiper/modules';
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { fetchDataFromApi, postData } from "../../../utils/api";
  
 
 const RelatedProducts = ( {title, productId, type}) => {
@@ -30,33 +31,31 @@ useEffect(() => {
     }
   }, [productId, type]);
 
-  const getRelatedProducts = async () => {
-    try {
-      const res = await axios.get(
-        `http://localhost:4000/api/products/related/${productId}`
-      );
-      setProducts(res.data.products);
-    } catch (error) {
-      console.log(error);
-    }
+const getRelatedProducts = async () => {
+  try {
+    const data = await fetchDataFromApi(`/api/products/related/${productId}`);
+    setProducts(data.products);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const getRecentProducts = async () => {
+  try {
+    const ids = JSON.parse(localStorage.getItem("recentProducts")) || [];
+
+    if (ids.length === 0) return;
+
+    const data = await postData("/api/products/by-ids", { ids });
+
+    setProducts(data.products);
+
+  } catch (error) {
+    console.log(error);
+  }
   };
-
-  const getRecentProducts = async () => {
-    try {
-      const ids = JSON.parse(localStorage.getItem("recentProducts")) || [];
-
-      if (ids.length === 0) return;
-
-      const res = await axios.post(
-        `http://localhost:4000/api/products/by-ids`,
-        { ids }
-      );
-
-      setProducts(res.data.products);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  
+  
     return (
         <>
               <div className='d-flex align-items-center mt-3'>

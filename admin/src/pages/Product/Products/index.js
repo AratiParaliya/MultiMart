@@ -13,6 +13,7 @@ import { MdShoppingBag } from "react-icons/md";
 import { useState } from "react";
 
 import Productlist from "../../../components/Productlist";
+import { fetchDataFromApi } from "../../../utils/api";
 
 
 
@@ -56,24 +57,23 @@ const Products = () => {
 
 const fetchDashboardData = async () => {
   try {
-    const [productsRes, categoryRes, subCategoryRes] = await Promise.all([
-     fetch("http://localhost:4000/api/products"),
-      fetch("http://localhost:4000/api/category/all"),
-      fetch("http://localhost:4000/api/subCategory/all"),
+    const [products, categoryData, subCategoryData] = await Promise.all([
+      fetchDataFromApi("/api/products"),
+      fetchDataFromApi("/api/category/all"),
+      fetchDataFromApi("/api/subCategory/all"),
     ]);
 
-   const products = await productsRes.json();
-    const categoryData = await categoryRes.json();
-    const subCategoryData = await subCategoryRes.json();
+    const categories = categoryData?.data || categoryData || [];
+    const subCategories = subCategoryData?.data || subCategoryData || [];
 
     setStats({
-     products: products.totalProducts || 0, 
-      category: categoryData?.length || 0,
-      subCategory: subCategoryData?.length || 0,
+      products: products?.totalProducts || 0,
+      category: categories.length,
+      subCategory: subCategories.length,
     });
 
   } catch (err) {
-    console.log(err);
+    console.log("Dashboard Error:", err);
   }
 };
         

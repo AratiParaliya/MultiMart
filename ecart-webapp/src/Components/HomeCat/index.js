@@ -5,6 +5,7 @@ import 'swiper/css/navigation';
 import { Navigation } from 'swiper/modules';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { fetchDataFromApi } from '../../utils/api';
 
 const HomeCat = () => {
   const [categories, setCategories] = useState([]);
@@ -15,17 +16,14 @@ const navigate = useNavigate();
 
 const getCategories = async () => {
   try {
-    const res = await axios.get("http://localhost:4000/api/category/all");
+    const data = await fetchDataFromApi("/api/category/all");
 
-    console.log("CATEGORY 👉", res.data);
-
-    // 🔥 HANDLE ALL POSSIBLE CASES
-    if (Array.isArray(res.data)) {
-      setCategories(res.data);
-    } else if (res.data.categoryList) {
-      setCategories(res.data.categoryList);
-    } else if (res.data.categories) {
-      setCategories(res.data.categories);
+    if (Array.isArray(data)) {
+      setCategories(data);
+    } else if (data.categoryList) {
+      setCategories(data.categoryList);
+    } else if (data.categories) {
+      setCategories(data.categories);
     } else {
       setCategories([]);
     }

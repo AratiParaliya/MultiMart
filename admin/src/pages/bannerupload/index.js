@@ -60,22 +60,23 @@ const [status, setStatus] = useState("true");
   });
 
   // ================= FETCH (EDIT) =================
-  useEffect(() => {
-    if (id) {
-      fetchDataFromApi(`/api/banner/${id}`).then((res) => {
-        const data = res.data;
+useEffect(() => {
+  if (id) {
+    fetchDataFromApi(`/api/banner/${id}`).then((res) => {
 
-setFormFields({
-  title: data.title,
-  desc: data.desc,
-  type: data.type,   
-  status: data.status
-});
+      const data = res?.data || res;
 
-setBannerImage(data.images?.[0]);  
+      setFormFields({
+        title: data.title || "",
+        desc: data.desc || "",
+        type: data.type || "home",
+        status: data.status ?? true
       });
-    }
-  }, [id]);
+
+      setBannerImage(data.image || data.images?.[0] || "");
+    });
+  }
+}, [id]);
 
   // ================= INPUT =================
   const changeInput = (e) => {

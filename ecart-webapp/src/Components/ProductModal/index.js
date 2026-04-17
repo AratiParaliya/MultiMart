@@ -23,17 +23,17 @@ const ProductModal = (props) => {
 
   const isLoggedIn = () => !!localStorage.getItem("user") && !!localStorage.getItem("token");
 
-  useEffect(() => {
-    if (context.productId) {
-      setProduct(null);
-      setActiveSize(null);
-      setQty(1);
-      axios
-        .get(`http://localhost:4000/api/products/${context.productId}`)
-        .then(res => setProduct(res.data))
-        .catch(err => console.log(err));
-    }
-  }, [context.productId]);
+useEffect(() => {
+  if (context.productId) {
+    setProduct(null);
+    setActiveSize(null);
+    setQty(1);
+
+    fetchDataFromApi(`/api/products/${context.productId}`)
+      .then(data => setProduct(data))
+      .catch(err => console.log(err));
+  }
+}, [context.productId]);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));

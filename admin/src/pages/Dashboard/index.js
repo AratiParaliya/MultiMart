@@ -13,6 +13,7 @@ import { HiDotsVertical, } from "react-icons/hi";
 import { Chart } from "react-google-charts";
 
 import Productlist from "../../components/Productlist";
+import { fetchDataFromApi } from "../../utils/api";
 
 
 export const options = {
@@ -47,97 +48,78 @@ const [recentReceipts, setRecentReceipts] = useState([]);
   };
 
     useEffect(() => {
-  const fetchDashboardData = async () => {
-    try {
-      const [usersRes, ordersRes, productsRes, receiptsRes] = await Promise.all([
-        fetch("http://localhost:4000/api/user"),
-        fetch("http://localhost:4000/api/orders"),
-        fetch("http://localhost:4000/api/products"),
-        fetch("http://localhost:4000/api/receipts")
-      ]);
+const fetchDashboardData = async () => {
+  try {
+    const [users, orders, products, receipts] = await Promise.all([
+      fetchDataFromApi("/api/user"),
+      fetchDataFromApi("/api/orders"),
+      fetchDataFromApi("/api/products"),
+      fetchDataFromApi("/api/receipts")
+    ]);
 
-      const users = await usersRes.json();
-      const orders = await ordersRes.json();
-      const products = await productsRes.json();
-      const receipts = await receiptsRes.json();
-
-      const totalRevenue = receipts.receipts.reduce(
-        (sum, r) => sum + r.amountPaid,
-        0
-      );
+    const totalRevenue = receipts.receipts.reduce(
+      (sum, r) => sum + r.amountPaid,
+      0
+    );
 
     const usersData = users?.data || users?.users || users;
-const ordersData = orders?.data || orders?.orders || orders;
-const productsData = products?.data || products?.products || products;
+    const ordersData = orders?.data || orders?.orders || orders;
 
+    setStats({
+      users: usersData.length || 0,
+      orders: ordersData.length || 0,
+      products: products.totalProducts || 0,
+      revenue: totalRevenue
+    });
 
-setStats({
-  users: usersData.length || 0,
-  orders: ordersData.length || 0,
-    products: products.totalProducts || 0, 
-  revenue: totalRevenue
-});
-        setRecentReceipts(receipts.receipts.slice(0, 5));
-      
-      // 📈 DAILY REVENUE GROUPING
-const revenueMap = {};
+    setRecentReceipts(receipts.receipts.slice(0, 5));
 
-receipts.receipts.forEach((r) => {
-  const date = new Date(r.issuedAt).toLocaleDateString();
+    // 📈 DAILY REVENUE
+    const revenueMap = {};
 
-  if (!revenueMap[date]) {
-    revenueMap[date] = 0;
+    receipts.receipts.forEach((r) => {
+      const date = new Date(r.issuedAt).toLocaleDateString();
+
+      if (!revenueMap[date]) revenueMap[date] = 0;
+
+      revenueMap[date] += r.amountPaid;
+    });
+
+    const revenueChartData = [
+      ["Date", "Revenue"],
+      ...Object.keys(revenueMap).map((date) => [date, revenueMap[date]])
+    ];
+
+    setRevenueData(revenueChartData);
+
+    // 📊 ORDERS STATUS
+    const ordersD = orders?.data || orders?.orders || [];
+
+    const paidOrders = ordersD.filter(
+      (o) => ["paid", "delivered", "success"].includes(o.status?.toLowerCase())
+    ).length;
+
+    const pendingOrders = ordersD.filter(
+      (o) => ["pending", "processing"].includes(o.status?.toLowerCase())
+    ).length;
+
+    const cancelledOrders = ordersD.filter(
+      (o) => o.status?.toLowerCase() === "cancelled"
+    ).length;
+
+    const orderVsPaymentData = [
+      ["Type", "Count"],
+      ["Paid Orders", paidOrders],
+      ["Pending Orders", pendingOrders],
+      ["Cancelled Orders", cancelledOrders]
+    ];
+
+    setOrderVsPaymentData(orderVsPaymentData);
+
+  } catch (err) {
+    console.log(err);
   }
-
-  revenueMap[date] += r.amountPaid;
-});
-
-const revenueChartData = [
-  ["Date", "Revenue"],
-  ...Object.keys(revenueMap).map((date) => [date, revenueMap[date]])
-];
-
-setRevenueData(revenueChartData);
-
-
-// 📊 ORDERS vs PAYMENTS
-const ordersD = orders?.data || orders?.orders || [];
-
-console.log("ORDERS DATA:", ordersD);
-
-const totalOrders = ordersD.length;
-
-const paidOrders = ordersD.filter(
-  (o) => ["paid", "delivered", "success"].includes(o.status?.toLowerCase())
-).length;
-
-const pendingOrders = ordersD.filter(
-  (o) => ["pending", "processing"].includes(o.status?.toLowerCase())
-).length;
-
-const cancelledOrders = ordersD.filter(
-  (o) => o.status?.toLowerCase() === "cancelled"
-).length;
-
-console.log("Paid:", paidOrders);
-console.log("Pending:", pendingOrders);
-      console.log("Cancelled:", cancelledOrders);
-      
-const orderVsPaymentData = [
-  ["Type", "Count"],
-  ["Paid Orders", paidOrders],
-  ["Pending Orders", pendingOrders],
-  ["Cancelled Orders", cancelledOrders]
-];
-
-setOrderVsPaymentData(orderVsPaymentData);
-
-
-
-    } catch (err) {
-      console.log(err);
-    }
-        };
+};
         
 
   fetchDashboardData();

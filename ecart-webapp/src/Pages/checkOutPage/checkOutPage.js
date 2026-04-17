@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { MyContext } from "../../App";
-import { deleteData } from "../../utils/api";
+import { deleteData, fetchDataFromApi, postData } from "../../utils/api";
 import { useNavigate } from "react-router-dom";
 
 const CheckOut = () => {
@@ -38,37 +38,39 @@ const CheckOut = () => {
       .then((d) => setStates(d.data?.states || []));
   }, [formData.country]);
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user?._id) return;
-    fetch(`http://localhost:4000/api/cart/${user._id}`)
-      .then((r) => r.json())
-      .then((d) => setCartData(d.items || d.cartItems || d || []));
-  }, []);
+useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user?._id) return;
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user?._id) return;
-    fetch(`http://localhost:4000/api/user/${user._id}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const u = d.user || d;
-        if (u)
-          setFormData((p) => ({
-            ...p,
-            firstName: u.firstName || u.name || "",
-            lastName: u.lastName || "",
-            phone: u.phone || "",
-            email: u.email || "",
-            address1: u.address1 || "",
-            address2: u.address2 || "",
-            city: u.city || "",
-            state: u.state || "",
-            zipCode: u.zipCode || "",
-            country: u.country || "India",
-          }));
-      });
-  }, []);
+  fetchDataFromApi(`/api/cart/${user._id}`)
+    .then(d => setCartData(d.items || d.cartItems || d || []));
+}, []);
+
+useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user?._id) return;
+
+  fetchDataFromApi(`/api/user/${user._id}`)
+    .then(d => {
+      const u = d.user || d;
+
+      if (u) {
+        setFormData(prev => ({
+          ...prev,
+          firstName: u.firstName || u.name || "",
+          lastName: u.lastName || "",
+          phone: u.phone || "",
+          email: u.email || "",
+          address1: u.address1 || "",
+          address2: u.address2 || "",
+          city: u.city || "",
+          state: u.state || "",
+          zipCode: u.zipCode || "",
+          country: u.country || "India",
+        }));
+      }
+    });
+}, []);
 
   /* ─── calculations ─── */
   const subtotal = cartData.reduce(
@@ -119,17 +121,16 @@ const validateForm = () => {
     } catch (e) { console.log(e); }
   };
 
-  const createReceipt = async (payload) => {
-    try {
-      await fetch("http://localhost:4000/api/receipts/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-    } catch (e) { console.log(e); }
-  };
+const createReceipt = async (payload) => {
+  try {
+    await postData("/api/receipts/create", payload);
+  } catch (e) {
+    console.log(e);
+  }
+};
 
   const placeOrder = async () => {
+
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user?._id) return alert("Please login first");
     if (!validateForm()) return;
@@ -147,11 +148,10 @@ const validateForm = () => {
 
     try {
       if (formData.paymentMethod === "UPI") {
-        const res = await fetch("http://localhost:4000/api/payment/create-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: total + shippingCost, userId: user._id }),
-        });
+       const res = await postData("/api/payment/create-order", {
+  amount: total + shippingCost,
+  userId: user._id
+});
         const data = await res.json();
         if (!data.success) return alert("Payment init failed");
 
@@ -162,30 +162,32 @@ const validateForm = () => {
           name: "Your Store",
           description: "Order Payment",
           order_id: data.orderId,
+
+
           handler: async (response) => {
             const paymentId = data.paymentId;
-            const verifyRes = await fetch("http://localhost:4000/api/payment/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                paymentId,
-              }),
+
+            const verifyRes = await postData("/api/payment/verify-payment", {
+            
+             
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              paymentId,
             });
+            
+
             const verifyResult = await verifyRes.json();
             if (!verifyResult.success) return alert("Payment verification failed");
 
-            const orderRes = await fetch("http://localhost:4000/api/orders/create", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
+            const orderRes = await postData("/api/orders/create", {
+            
+          
                 userId: user._id, orderItems, shippingAddress: checkoutData,
                 paymentMethod: "UPI", itemsPrice: total,
                 shippingPrice: shippingCost, totalPrice: total + shippingCost,
                 paymentId, isPaid: true, status: "Paid",
-              }),
+         
             });
             const orderResult = await orderRes.json();
             if (orderResult.success) {

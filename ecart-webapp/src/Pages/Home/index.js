@@ -106,12 +106,11 @@ const getNewProducts = async () => {
   
 const getBestSellers = async () => {
   try {
-   const url = context.selectedCountry
-  ? `http://localhost:4000/api/products/best-sellers?country=${context.selectedCountry}`
-  : `http://localhost:4000/api/products/best-sellers`;
+    const url = context.selectedCountry
+      ? `/api/products/best-sellers?country=${context.selectedCountry}`
+      : `/api/products/best-sellers`;
 
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await fetchDataFromApi(url);
 
     setBestProducts(data.products || []);
 
