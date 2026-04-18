@@ -323,7 +323,7 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
-});z
+});
 
 router.delete('/:id', async (req, res) => {
 
