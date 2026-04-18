@@ -17,8 +17,7 @@ const bannerSchema = new mongoose.Schema(
   type: String,
   enum: ['home','side-banner','category', 'offer'],
   default: 'home'
-    },
-  public_id: String ,
+},
    
     status: {
       type: Boolean,

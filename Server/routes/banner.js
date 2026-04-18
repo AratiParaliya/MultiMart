@@ -1,17 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const Banner = require("../models/banner");
-const upload = require("../middleware/upload");
-const cloudinary = require("../config/cloudinary");
+
+
 const multer = require("multer");
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  }
+});
 
-
-
+const upload = multer({ storage });
 const pLimit = require('p-limit');
 
-
-
+module.exports = upload;
 // ✅ CREATE BANNER
 router.post("/", async (req, res) => {
   try {
@@ -27,8 +33,7 @@ router.post("/", async (req, res) => {
   desc: req.body.desc,
   type: req.body.type,   // ✅ ADD THIS
   status: req.body.status,
-   images: req.body.image,
-    public_id: req.body.public_id 
+  images: req.body.image
 });
 
     await banner.save();
@@ -48,8 +53,6 @@ router.post("/", async (req, res) => {
 });
 
 // ✅ UPLOAD IMAGE ONLY
-
-
 router.post("/upload", upload.single("image"), (req, res) => {
   try {
     if (!req.file) {
@@ -59,10 +62,11 @@ router.post("/upload", upload.single("image"), (req, res) => {
       });
     }
 
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
     res.json({
       success: true,
-      image: req.file.path,        // URL
-      public_id: req.file.filename // ✅ VERY IMPORTANT
+      image: imageUrl   // ✅ SINGLE IMAGE
     });
 
   } catch (err) {
@@ -138,21 +142,14 @@ router.get("/:id", async (req, res) => {
 // ✅ UPDATE BANNER
 router.put("/:id", async (req, res) => {
   try {
-    const existingBanner = await Banner.findById(req.params.id);
 
-    // ✅ If new image uploaded → delete old image
-    if (req.body.public_id && existingBanner.public_id) {
-      await cloudinary.uploader.destroy(existingBanner.public_id);
-    }
-
-    const updateData = {
-      title: req.body.title,
-      desc: req.body.desc,
-      type: req.body.type,
-      status: req.body.status,
-      images: req.body.image,
-      public_id: req.body.public_id
-    };
+const updateData = {
+  title: req.body.title,
+  desc: req.body.desc,
+  type: req.body.type,   // ✅ ADD THIS
+  status: req.body.status,
+  images: req.body.image
+};
 
     const banner = await Banner.findByIdAndUpdate(
       req.params.id,
@@ -179,13 +176,6 @@ router.put("/:id", async (req, res) => {
 // ✅ DELETE BANNER
 router.delete("/:id", async (req, res) => {
   try {
-    const banner = await Banner.findById(req.params.id);
-
-    // ✅ delete image from cloudinary
-    if (banner.public_id) {
-      await cloudinary.uploader.destroy(banner.public_id);
-    }
-
     await Banner.findByIdAndDelete(req.params.id);
 
     res.json({
