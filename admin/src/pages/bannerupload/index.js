@@ -48,7 +48,7 @@ const BannerUpload = () => {
  const [bannerImage, setBannerImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-const [status, setStatus] = useState("true");
+
 
 
 
@@ -86,14 +86,7 @@ useEffect(() => {
     });
   };
     
-  const handleChangeStatus = (event) => {
-  setStatus(event.target.value);
 
-  setFormFields((prev) => ({
-    ...prev,
-  status: event.target.value === "true"
-  }));
-};
     // ================= REMOVE IMAGE =================
 const removeImg = () => {
   setBannerImage("");

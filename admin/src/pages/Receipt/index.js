@@ -87,7 +87,7 @@ const generatePDF = async (receipt) => {
   const orderId = receipt.orderId?._id || receipt.orderId;
   if (!orderId) { alert("Order ID not found ❌"); return; }
 
-  const qrUrl = `http://localhost:3001/update-order/${orderId}`;
+  const qrUrl = `http://10.74.186.208:3001/update-order/${orderId}`;
   const qrImage = await QRCode.toDataURL(qrUrl);
 
  const element = document.createElement("div");
