@@ -10,7 +10,6 @@ const mongoose = require('mongoose');
 const cloudinary = require("cloudinary").v2;
 
 const app = express();
-const uploadRoutes = require('./routes/upload');
 
 
 app.use(cookieParser());
@@ -50,8 +49,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/subCategory', subCategoryRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', ordersRoutes);
-
-app.use('/api/upload', uploadRoutes);
 // Database
 mongoose.connect(process.env.CONNECTION_STRING)
 .then(() => {
