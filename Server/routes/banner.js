@@ -1,23 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const Banner = require("../models/banner");
-
+const upload = require("../middleware/upload");
 
 const multer = require("multer");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  }
-});
 
-const upload = multer({ storage });
+
+
 const pLimit = require('p-limit');
 
-module.exports = upload;
+
+
 // ✅ CREATE BANNER
 router.post("/", async (req, res) => {
   try {
@@ -53,6 +47,8 @@ router.post("/", async (req, res) => {
 });
 
 // ✅ UPLOAD IMAGE ONLY
+
+
 router.post("/upload", upload.single("image"), (req, res) => {
   try {
     if (!req.file) {
@@ -62,11 +58,9 @@ router.post("/upload", upload.single("image"), (req, res) => {
       });
     }
 
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-
     res.json({
       success: true,
-      image: imageUrl   // ✅ SINGLE IMAGE
+      image: req.file.path // ✅ Cloudinary URL
     });
 
   } catch (err) {
