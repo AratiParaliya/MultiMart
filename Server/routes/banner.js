@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Banner = require("../models/banner");
 const upload = require("../middleware/upload");
-
+const cloudinary = require("../config/cloudinary");
 const multer = require("multer");
 
 
@@ -27,7 +27,8 @@ router.post("/", async (req, res) => {
   desc: req.body.desc,
   type: req.body.type,   // ✅ ADD THIS
   status: req.body.status,
-  images: req.body.image
+   images: req.body.image,
+    public_id: req.body.public_id 
 });
 
     await banner.save();
@@ -60,7 +61,8 @@ router.post("/upload", upload.single("image"), (req, res) => {
 
     res.json({
       success: true,
-      image: req.file.path // ✅ Cloudinary URL
+      image: req.file.path,        // URL
+      public_id: req.file.filename // ✅ VERY IMPORTANT
     });
 
   } catch (err) {
@@ -136,14 +138,21 @@ router.get("/:id", async (req, res) => {
 // ✅ UPDATE BANNER
 router.put("/:id", async (req, res) => {
   try {
+    const existingBanner = await Banner.findById(req.params.id);
 
-const updateData = {
-  title: req.body.title,
-  desc: req.body.desc,
-  type: req.body.type,   // ✅ ADD THIS
-  status: req.body.status,
-  images: req.body.image
-};
+    // ✅ If new image uploaded → delete old image
+    if (req.body.public_id && existingBanner.public_id) {
+      await cloudinary.uploader.destroy(existingBanner.public_id);
+    }
+
+    const updateData = {
+      title: req.body.title,
+      desc: req.body.desc,
+      type: req.body.type,
+      status: req.body.status,
+      images: req.body.image,
+      public_id: req.body.public_id
+    };
 
     const banner = await Banner.findByIdAndUpdate(
       req.params.id,
@@ -170,6 +179,13 @@ const updateData = {
 // ✅ DELETE BANNER
 router.delete("/:id", async (req, res) => {
   try {
+    const banner = await Banner.findById(req.params.id);
+
+    // ✅ delete image from cloudinary
+    if (banner.public_id) {
+      await cloudinary.uploader.destroy(banner.public_id);
+    }
+
     await Banner.findByIdAndDelete(req.params.id);
 
     res.json({
